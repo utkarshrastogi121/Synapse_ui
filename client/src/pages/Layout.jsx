@@ -15,7 +15,7 @@ import { useNavigate, NavLink, Outlet } from 'react-router-dom'
 import { motion } from "framer-motion"
 
 const headerItems = [
-    {to: 'https://emr-mocha.vercel.app/', label: 'Login', Icon: Login},
+    {to: 'login', label: 'Login', Icon: Login},
     {to: '/sign-up', label: 'Sign up', Icon: SignUp},
     {to: '/all-topic', label: 'All Topics', Icon: AllTopics}
 ]
