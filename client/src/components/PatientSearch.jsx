@@ -64,26 +64,21 @@ export default function PatientSearch() {
     const handleAddProblem = (newDiagnosis) => {
       if (!newDiagnosis) return;
 
-      // Update immutably so React re-renders
-      setSelectedPatient((prev) => ({
-        ...prev,
-        problems: [
-          ...prev.problems,
-          {
-            code: newDiagnosis.code,
-            diagnosis: newDiagnosis.disease,
-            tm: newDiagnosis.system === "ICD-11 TM2" ? newDiagnosis.icdCode : "—",
-            ayurveda: newDiagnosis.disease,
-            icd:
-              newDiagnosis.system === "ICD-11 Biomedicine"
-                ? newDiagnosis.icdCode
-                : "—",
-            notes: newDiagnosis.icdName,
-            addedBy: "Dr. Ananya Sharma",
-            date: new Date().toLocaleDateString(),
-          },
-        ],
-      }));
+      console.log(newDiagnosis)
+
+      setSelectedPatient((prev) => {
+        const updatedPatient = {
+          ...prev,
+          problems: [...prev.problems, newDiagnosis],
+        };
+
+        setResults((prevResults) =>
+          prevResults.map((r) => (r.id === updatedPatient.id ? updatedPatient : r))
+        );
+
+        return updatedPatient;
+      });
+
     };
 
     return (
@@ -146,7 +141,7 @@ export default function PatientSearch() {
             </div>
             <div className="space-y-4">
               {selectedPatient.problems.map((p, idx) => (
-                <div key={idx} className="border p-3 rounded-lg">
+                <div key={idx} className=" shadow-md p-3 rounded-lg">
                   <div className="flex flex-wrap gap-2 mb-1 text-sm">
                     <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
                       {p.code}
@@ -154,6 +149,7 @@ export default function PatientSearch() {
                     <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
                       {p.tm}
                     </span>
+                    {console.log(p.ayurveda) /* debug */}
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
                       {p.ayurveda}
                     </span>

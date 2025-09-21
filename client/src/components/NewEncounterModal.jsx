@@ -1,36 +1,34 @@
 import React, { useState } from "react";
 
 const diseaseMapping = {
+  sandhivata: {
+    code: "NAM-5678",
+    description: "Sandhivata",
+    mappings: [
+      { id: "tm2", system: "TM2:MB28", name: "Vata-vyadhi" },
+      { id: "biomed", system: "ICD-11:FB20.0", name: "Osteoarthritis" },
+    ],
+  },
   amavata: {
     code: "NAM-1234",
     description: "Amavata (RA-like disorder)",
     mappings: [
-      {
-        id: "tm2",
-        system: "ICD-11 TM2",
-        code: "TM2:MB27",
-        name: "Bi-syndrome with pain",
-      },
-      {
-        id: "biomed",
-        system: "ICD-11 Biomedicine",
-        code: "ICD-11:FA20",
-        name: "Rheumatoid Arthritis",
-      },
+      { id: "tm2", system: "TM2:MB27", name: "Vata-kapha-vyadhi" },
+      { id: "biomed", system: "ICD-11:FA20", name: "Rheumatoid Arthritis" },
     ],
   },
 };
 
 export default function NewEncounterModal({ isOpen, onClose, onAdd }) {
   const [diagnosis, setDiagnosis] = useState("");
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState(false);
 
   const mapping = diseaseMapping[diagnosis.trim().toLowerCase()];
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-transparent bg-opacity-30">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-8 relative">
         {/* Close */}
         <button
@@ -42,7 +40,7 @@ export default function NewEncounterModal({ isOpen, onClose, onAdd }) {
 
         {/* Title */}
         <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-          <span role="img" aria-label="stethoscope">🩺</span> Add Diagnosis (Dual-Coding)
+          🩺 Add Diagnosis (Dual-Coding)
         </h2>
 
         {/* Search Input */}
@@ -51,17 +49,22 @@ export default function NewEncounterModal({ isOpen, onClose, onAdd }) {
           value={diagnosis}
           onChange={(e) => {
             setDiagnosis(e.target.value);
-            setSelected(null);
+            setSelected(false);
           }}
-          placeholder="Enter Disease (e.g., Amavata)"
+          placeholder="Enter Disease (e.g., Amavata, Sandhivata)"
           className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-6 focus:ring-2 focus:ring-blue-500 outline-none"
         />
 
-        {/* Table appears only when a mapping is found */}
+        {/* Show table mapping when found */}
         {mapping && (
-          <div className="border rounded-xl overflow-hidden">
+          <div
+            className={`border border-gray-300 rounded-xl overflow-hidden cursor-pointer ${
+              selected ? "bg-blue-100" : ""
+            }`}
+            onClick={() => setSelected(true)}
+          >
             <table className="w-full border-collapse">
-              <thead className="bg-gray-100 text-gray-600 text-sm">
+              <thead className="text-gray-600 text-sm">
                 <tr>
                   <th className="px-4 py-3 text-left">System</th>
                   <th className="px-4 py-3 text-left">Code</th>
@@ -69,24 +72,20 @@ export default function NewEncounterModal({ isOpen, onClose, onAdd }) {
                 </tr>
               </thead>
               <tbody className="text-sm text-gray-700">
+                <tr>
+                  <td className="px-4 py-3 border-t">NAMASTE</td>
+                  <td className="px-4 py-3 border-t">{mapping.code}</td>
+                  <td className="px-4 py-3 border-t">{mapping.description}</td>
+                </tr>
                 {mapping.mappings.map((row) => (
-                  <tr
-                    key={row.id}
-                    className={`cursor-pointer ${
-                      selected === row.id ? "bg-blue-50" : "hover:bg-gray-50"
-                    }`}
-                    onClick={() => setSelected(row.id)}
-                  >
-                    <td className="px-4 py-3 border-t flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="diseaseSelect"
-                        checked={selected === row.id}
-                        onChange={() => setSelected(row.id)}
-                      />
-                      <span>{row.system}</span>
+                  <tr key={row.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 border-t">{row.system}</td>
+                    <td className="px-4 py-3 border-t">
+                      {/* For ICD row show ICD code, for TM row show TM code */}
+                      {row.system.startsWith("TM2")
+                        ? row.system
+                        : row.system}
                     </td>
-                    <td className="px-4 py-3 border-t">{row.code}</td>
                     <td className="px-4 py-3 border-t">{row.name}</td>
                   </tr>
                 ))}
@@ -99,14 +98,25 @@ export default function NewEncounterModal({ isOpen, onClose, onAdd }) {
         <button
           onClick={() => {
             if (mapping && selected) {
-              const chosen = mapping.mappings.find((m) => m.id === selected);
-              onAdd({
-                disease: mapping.description,
+              const tmMapping = mapping.mappings.find((m) =>
+                m.system.startsWith("TM2")
+              );
+              const icdMapping = mapping.mappings.find((m) =>
+                m.system.startsWith("ICD-11")
+              );
+
+              const problem = {
                 code: mapping.code,
-                system: chosen.system,
-                icdCode: chosen.code,
-                icdName: chosen.name,
-              });
+                diagnosis: mapping.description,
+                tm: tmMapping ? tmMapping.system : "—",
+                ayurveda: tmMapping ? tmMapping.name : "—",
+                icd: icdMapping ? icdMapping.system : "—",
+                notes: icdMapping ? icdMapping.name : "—",
+                addedBy: "Dr. Ananya Sharma",
+                date: new Date().toLocaleDateString(),
+              };
+
+              onAdd(problem);
               onClose();
             }
           }}
